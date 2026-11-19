@@ -55,7 +55,8 @@ header.stuck{background:var(--bg);box-shadow:0 6px 10px -8px rgba(0,0,0,.25)}
 .sec{display:flex;align-items:center;justify-content:space-between;margin:2px 2px 6px}
 .sec h3{margin:0;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
 .chips{display:flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:3px;margin-bottom:8px}
-.chip{flex:1;min-height:34px;border-radius:8px;border:none;background:none;font-size:12.5px;font-weight:700;color:var(--muted);white-space:nowrap}
+.chip{flex:1;min-height:34px;border-radius:8px;border:none;background:none;font-size:12px;padding:0 2px;font-weight:700;color:var(--muted);white-space:nowrap}
+.chip small{font-weight:600;opacity:.7}.busca{width:100%;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:0 12px;font-size:15px;margin:0 0 8px}
 .chip.on{background:var(--ink);color:var(--card)}
 .banner{border-radius:var(--r);padding:10px 12px;margin:0 0 8px;font-size:13.5px;background:var(--d1s);border:1px solid rgba(180,83,9,.25);display:flex;gap:8px;align-items:center}
 .banner span{flex:1}.banner button{border:none;background:var(--card);border-radius:8px;padding:8px 10px;font-weight:700;font-size:12.5px}
@@ -145,7 +146,7 @@ textarea{width:100%;min-height:170px;border-radius:10px;border:1px solid var(--l
   </div>
   <div class="stats">
     <div class="stat"><span>Peças</span><b id="sP">0</b></div>
-    <div class="stat ex"><span>Express</span><b id="sX">0</b></div>
+    <div class="stat ex"><span>Volumoso</span><b id="sX">0</b></div>
     <div class="stat red"><span>D1 + D2</span><b id="sA">0</b></div>
     <div class="stat red" id="sBbox"><span>A baixar</span><b id="sB">0</b></div>
   </div>
@@ -162,6 +163,7 @@ textarea{width:100%;min-height:170px;border-radius:10px;border:1px solid var(--l
   </div>
   <div class="sec"><h3>Rotas do dia</h3></div>
   <div class="chips" id="chips"></div>
+  <input id="busca" class="busca" type="search" placeholder="Buscar rota…" autocomplete="off">
   <div class="list" id="list"></div>
   <div class="foot"><span id="saved"></span><span>Toque na rota para editar</span></div>
 </section>
@@ -190,7 +192,7 @@ textarea{width:100%;min-height:170px;border-radius:10px;border:1px solid var(--l
     <button id="mClear"><i class="ico" style="background:var(--d2s);color:var(--d2)"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></svg></i><span>Limpar o dia aberto</span><small id="mClearD"></small></button>
   </div>
   <p class="note">Os dados ficam salvos neste aparelho e funcionam sem internet. Faça backup toda semana.</p>
-  <p class="ver">Controle de Expedição · v3.0</p>
+  <p class="ver">Controle de Expedição · v3.1</p>
 </section>
 </div>
 
@@ -203,7 +205,7 @@ textarea{width:100%;min-height:170px;border-radius:10px;border:1px solid var(--l
 <!-- sheets -->
 <div class="sheet" id="shPaste"><div class="panel">
   <h3>Colar mensagem do WhatsApp</h3>
-  <textarea id="pTxt" placeholder="Cole a mensagem do dia do jeito que chega (Rota B03/C03 · 22 peças · 02 express…)"></textarea>
+  <textarea id="pTxt" placeholder="Cole a mensagem do dia do jeito que chega (Rota B03/C03 · 22 peças · 02 volumosos…)"></textarea>
   <div id="pPrev"></div>
   <div class="btns"><button data-close>Cancelar</button><button class="primary" id="pOk" disabled>Lançar no dia</button></div>
 </div></div>
@@ -245,8 +247,8 @@ textarea{width:100%;min-height:170px;border-radius:10px;border:1px solid var(--l
 "use strict";
 const $=id=>document.getElementById(id);
 const LS="controleRotas.v1", LSM="controleRotas.meta";
-const DEF=["B03/C03","B07/C07","015/A15","10","007","006","016","A18","SU3/4","SU7/8","MM1/MM2"];
-const F=["d0","d1","d2","express"], LAB={d0:"D0",d1:"D1",d2:"D2",express:"Express"}, FC={d0:"f0",d1:"f1",d2:"f2",express:"fx"};
+const DEF=["B01/C01", "B02/C02", "B03/C03", "B04/C04", "B05/C05", "B06/C06", "B07/C07", "B15", "014/A14", "015/A15", "016/A16", "A17/017", "018/A18", "PA1/PA2", "PA3/PA4", "PA5/PA6", "SU1/SU2", "SU3/SU4", "SU5/SU6", "SU7/SU8", "MM1/MM2", "Elias Fausto", "HT4/HT5", "HT1/HT2/HT3", "013/A13", "012/A12", "011/A11", "010/A10/C10", "D10", "009/A09", "008/A08", "007/A07/S07", "006/A06", "005/A05", "004/A04/D04", "003/A03/D03/S03", "002/A02", "001/A02"];
+const F=["d0","d1","d2","express"], LAB={d0:"D0",d1:"D1",d2:"D2",express:"Volumoso"}, FC={d0:"f0",d1:"f1",d2:"f2",express:"fx"};
 const WD=["domingo","segunda","terça","quarta","quinta","sexta","sábado"];
 
 // ---------- storage ----------
@@ -272,12 +274,12 @@ const add=(s,n)=>{const d=pISO(s);d.setDate(d.getDate()+n);return iso(d);};
 
 // ---------- helpers ----------
 const key=s=>String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase().replace(/[^A-Z0-9]/g,"");
-const clean=s=>String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase().replace(/\s+/g,"").trim();
+const clean=s=>String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase().replace(/\s*\/\s*/g,"/").replace(/\s+/g," ").trim();
 const n=v=>{v=Number(v);return Number.isFinite(v)&&v>0?Math.floor(v):0;};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const clone=o=>JSON.parse(JSON.stringify(o));
 
-let cur=today(), filter="todas", openRow=null;
+let cur=today(), filter="todas", openRow=null, q="";
 function dayRotas(d){return (store.dias[d]&&store.dias[d].rotas)||{};}
 function ent(r,d){const e=dayRotas(d||cur)[r]||{};return {d0:n(e.d0),d1:n(e.d1),d2:n(e.d2),express:n(e.express),baixa:!!e.baixa};}
 const qnt=e=>e.d0+e.d1+e.d2;
@@ -319,21 +321,21 @@ function renderHeader(){
 
 // ---------- render: list ----------
 function counts(){
-  let pend=0,late=0,all=0;
-  routes().forEach(r=>{const e=ent(r);all++;if((qnt(e)||e.express)&&!e.baixa)pend++;if(e.d1+e.d2>0)late++;});
-  return {all,pend,late};
+  let pend=0,late=0,all=0,com=0;
+  routes().forEach(r=>{const e=ent(r);all++;if(qnt(e)||e.express)com++;if((qnt(e)||e.express)&&!e.baixa)pend++;if(e.d1+e.d2>0)late++;});
+  return {all,pend,late,com};
 }
 function renderChips(){
   const c=counts();
-  const it=[["todas","Todas",c.all],["pend","Sem baixa",c.pend],["late","Atrasadas",c.late]];
-  $("chips").innerHTML=it.map(([k,l,v])=>'<button class="chip'+(filter===k?" on":"")+'" data-f="'+k+'">'+l+" ("+v+")</button>").join("");
+  const it=[["todas","Todas",c.all],["com","Com peças",c.com],["pend","A baixar",c.pend],["late","Atrasadas",c.late]];
+  $("chips").innerHTML=it.map(([k,l,v])=>'<button class="chip'+(filter===k?" on":"")+'" data-f="'+k+'">'+l+' <small>'+v+"</small></button>").join("");
 }
 function tags(e){
   const t=[];
   if(e.d0)t.push('<span class="tag t0">D0 '+e.d0+"</span>");
   if(e.d1)t.push('<span class="tag t1">D1 '+e.d1+"</span>");
   if(e.d2)t.push('<span class="tag t2">D2 '+e.d2+"</span>");
-  if(e.express)t.push('<span class="tag tx">Exp '+e.express+"</span>");
+  if(e.express)t.push('<span class="tag tx">Vol '+e.express+"</span>");
   return t.length?t.join(""):'<span class="tag te">sem peças</span>';
 }
 function rcls(e){return e.baixa?" ok":(e.d1+e.d2)?" late":"";}
@@ -350,9 +352,11 @@ function rowHTML(r){
 }
 function renderList(){
   let rs=routes();
+  if(filter==="com")rs=rs.filter(r=>{const e=ent(r);return qnt(e)||e.express;});
+  if(q){const qk=key(q);rs=rs.filter(r=>key(r).includes(qk));}
   if(filter==="pend")rs=rs.filter(r=>{const e=ent(r);return (qnt(e)||e.express)&&!e.baixa;});
   if(filter==="late")rs=rs.filter(r=>{const e=ent(r);return e.d1+e.d2>0;});
-  $("list").innerHTML=rs.length?rs.map(rowHTML).join(""):'<div class="empty">'+(filter==="todas"?"Nenhuma rota. Cadastre em Mais → Rotas fixas.":filter==="pend"?"Todas as rotas com baixa":"Nenhuma rota atrasada")+"</div>";
+  $("list").innerHTML=rs.length?rs.map(rowHTML).join(""):'<div class="empty">'+(q?"Nenhuma rota encontrada.":filter==="com"?"Nenhuma rota com peças neste dia.":filter==="todas"?"Nenhuma rota. Cadastre em Mais → Rotas fixas.":filter==="pend"?"Todas as rotas com baixa":"Nenhuma rota atrasada")+"</div>";
   renderChips();
 }
 function refreshRow(r){
@@ -377,6 +381,7 @@ function renderBanners(){
 }
 
 // ---------- list events ----------
+$("busca").addEventListener("input",e=>{q=e.target.value.trim();renderList();});
 $("chips").addEventListener("click",e=>{const b=e.target.closest("[data-f]");if(!b)return;filter=b.dataset.f;renderList();});
 $("list").addEventListener("click",ev=>{
   const row=ev.target.closest(".row");if(!row)return;const r=row.dataset.r;
@@ -415,7 +420,7 @@ function parseMsg(txt){
     const l=l0.normalize("NFD").replace(/[̀-ͯ]/g,"");
     const pz=l.match(/\bD\s*-?\s*([012])\b/i);let m;
     if((m=l.match(/^(\d+)\s*(pe[cç]?as?|pcs?|pç)\b/i))){if(c)c[c.prazo]+=Number(m[1]);return;}
-    if((m=l.match(/^(\d+)\s*express/i))){if(c)c.express+=Number(m[1]);return;}
+    if((m=l.match(/^(\d+)\s*(express|volumos[oa]s?|vol\b)/i))){if(c)c.express+=Number(m[1]);return;}
     if((m=l.match(/^rota\s*:?\s*(.+)$/i))){c=get(m[1]);c.prazo=prazo;return;}
     if(pz&&l.replace(/[^A-Za-z]/g,"").length>3){prazo="d"+pz[1];return;}
     if(/^[A-Za-z0-9]{1,6}(\s*\/\s*[A-Za-z0-9]{1,6})?$/.test(l)&&/\d/.test(l)&&!/^\d+$/.test(l)){c=get(l);c.prazo=prazo;return;}
@@ -423,13 +428,27 @@ function parseMsg(txt){
   });
   return out.filter(r=>r.d0+r.d1+r.d2+r.express>0);
 }
-const match=name=>{const k=key(name);return routes().find(r=>key(r)===k)||null;};
+function toks(s){
+  const parts=String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase().split("/").map(p=>p.replace(/[^A-Z0-9]/g,"")).filter(Boolean);
+  let pre="";return parts.map((p,i)=>{let t=p;
+    if(/^\d+$/.test(t))t=(i>0&&pre)?pre+t:t.padStart(3,"0");
+    if(i===0){const m=t.match(/^([A-Z]+)\d/);pre=m?m[1]:"";}
+    return t;});
+}
+function findRoute(name,list){
+  const k=key(name);let r=list.find(x=>key(x)===k);if(r)return r;
+  const t=toks(name);if(!t.length)return null;
+  r=list.find(x=>toks(x)[0]===t[0]);if(r)return r;
+  r=list.find(x=>toks(x).includes(t[0]));if(r)return r;
+  return list.find(x=>{const u=toks(x);return t.some(y=>u.includes(y));})||null;
+}
+const match=name=>findRoute(name,routes());
 let parsed=[];
 $("aPaste").onclick=()=>{$("pTxt").value="";$("pPrev").innerHTML="";$("pOk").disabled=true;openSheet("shPaste");setTimeout(()=>$("pTxt").focus(),60);};
 $("pTxt").addEventListener("input",()=>{
   parsed=parseMsg($("pTxt").value);
   if(!parsed.length){$("pPrev").innerHTML=$("pTxt").value.trim()?'<p class="note">Não reconheci nenhuma rota ainda.</p>':"";$("pOk").disabled=true;return;}
-  let t=0,x=0,h='<table><tr><th>Rota</th><th>D0</th><th>D1</th><th>D2</th><th>Exp</th></tr>';
+  let t=0,x=0,h='<table><tr><th>Rota</th><th>D0</th><th>D1</th><th>D2</th><th>Vol</th></tr>';
   parsed.forEach(r=>{const m=match(r.name);t+=r.d0+r.d1+r.d2;x+=r.express;h+="<tr><td>"+esc(m||r.name)+(m?"":' <span class="new">NOVA</span>')+"</td><td>"+r.d0+"</td><td>"+r.d1+"</td><td>"+r.d2+"</td><td>"+r.express+"</td></tr>";});
   h+="<tr><th>Total</th><th colspan=3>"+t+" peças</th><th>"+x+"</th></tr></table><p class=note>Vai lançar em "+br(cur)+". Rotas fora da mensagem ficam como estão.</p>";
   $("pPrev").innerHTML=h;$("pOk").disabled=false;
@@ -468,9 +487,9 @@ function summary(){
   routes().forEach(r=>{const e=ent(r),q=qnt(e);if(!q&&!e.express)return;p+=q;x+=e.express;a+=e.d1+e.d2;
     t+="\nRota "+r+"\n"+String(q).padStart(2,"0")+" peças";
     if(e.d1||e.d2){const ps=[];if(e.d0)ps.push("D0: "+e.d0);if(e.d1)ps.push("D1: "+e.d1);if(e.d2)ps.push("D2: "+e.d2);t+=" ("+ps.join(" · ")+")";}
-    if(e.express)t+="\n"+String(e.express).padStart(2,"0")+" express";
+    if(e.express)t+="\n"+String(e.express).padStart(2,"0")+(e.express>1?" volumosos":" volumoso");
     t+=e.baixa?"\n✅ baixa ok":"";t+="\n";});
-  return t+"\n*Total:* "+p+" peças · "+x+" express"+(a?" · "+a+" atrasadas (D1+D2)":"");
+  return t+"\n*Total:* "+p+" peças · "+x+" volumosos"+(a?" · "+a+" atrasadas (D1+D2)":"");
 }
 $("aSend").onclick=()=>{$("sTxt").value=summary();$("sShare").hidden=!navigator.share;openSheet("shSend");};
 $("sCopy").onclick=async()=>{try{await navigator.clipboard.writeText($("sTxt").value);toast("Copiado – cole no WhatsApp");}catch(e){$("sTxt").select();toast("Selecione e copie o texto");}};
@@ -491,7 +510,7 @@ function renderRel(){
       const k=match(r)||r;per[k]=per[k]||{p:0,a:0,x:0};per[k].p+=q;per[k].a+=e.d1+e.d2;per[k].x+=e.express;});}
     P+=d0+d1+d2;A+=d1+d2;daily.push({d,d0,d1,d2});});
   const pct=P?Math.round(A/P*1000)/10:0;
-  $("kpis").innerHTML='<div class="kpi"><b>'+P+'</b><span>peças no período</span></div><div class="kpi"><b>'+X+'</b><span>express</span></div>'+
+  $("kpis").innerHTML='<div class="kpi"><b>'+P+'</b><span>peças no período</span></div><div class="kpi"><b>'+X+'</b><span>volumosos</span></div>'+
     '<div class="kpi"><b class="pct">'+A+' <small>('+String(pct).replace(".",",")+'%)</small></b><span>atrasadas D1+D2</span></div><div class="kpi"><b>'+(dias?Math.round(P/dias):0)+'</b><span>média/dia ('+dias+' dias lançados)</span></div>';
   const mx=Math.max(1,...daily.map(x=>x.d0+x.d1+x.d2));
   $("bars").innerHTML=daily.map(x=>{const t=x.d0+x.d1+x.d2;return '<div class="bar" title="'+br(x.d)+': '+t+'" style="height:'+(t?Math.max(4,t/mx*100):2)+'%">'+
@@ -499,13 +518,13 @@ function renderRel(){
   const step=Math.ceil(daily.length/8);
   $("blabels").innerHTML=daily.map((x,i)=>"<span>"+(i%step===0?brs(x.d):"")+"</span>").join("");
   const rows=Object.entries(per).sort((a,b)=>b[1].a-a[1].a||b[1].p-a[1].p);
-  $("rtab").innerHTML=rows.length?"<tr><th>Rota</th><th>Peças</th><th>Exp</th><th>D1+D2</th><th>% atraso</th></tr>"+rows.map(([r,v])=>"<tr><td>"+esc(r)+"</td><td>"+v.p+"</td><td>"+v.x+"</td><td>"+v.a+"</td><td"+(v.a?' class="pct"':"")+">"+(v.p?String(Math.round(v.a/v.p*1000)/10).replace(".",","):0)+"%</td></tr>").join(""):'<tr><td class="empty">Sem dados neste período.</td></tr>';
+  $("rtab").innerHTML=rows.length?"<tr><th>Rota</th><th>Peças</th><th>Vol</th><th>D1+D2</th><th>% atraso</th></tr>"+rows.map(([r,v])=>"<tr><td>"+esc(r)+"</td><td>"+v.p+"</td><td>"+v.x+"</td><td>"+v.a+"</td><td"+(v.a?' class="pct"':"")+">"+(v.p?String(Math.round(v.a/v.p*1000)/10).replace(".",","):0)+"%</td></tr>").join(""):'<tr><td class="empty">Sem dados neste período.</td></tr>';
 }
 function baixar(nome,conteudo,tipo){
   try{const b=new Blob([conteudo],{type:tipo}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=nome;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove();},1500);return true;}catch(e){toast("Não consegui baixar");return false;}
 }
 $("csv").onclick=()=>{
-  let csv="﻿Data;Rota;Qnt;Express;D0;D1;D2;Baixa ok\n";
+  let csv="﻿Data;Rota;Qnt;Volumoso;D0;D1;D2;Baixa ok\n";
   Object.keys(store.dias).sort().forEach(d=>Object.keys(dayRotas(d)).forEach(r=>{const e=ent(r,d),q=qnt(e);if(!q&&!e.express)return;
     csv+=[br(d),'"'+String(r).replace(/"/g,'""')+'"',q,e.express,e.d0,e.d1,e.d2,e.baixa?"Sim":"Não"].join(";")+"\n";}));
   if(baixar("controle-rotas-"+today()+".csv",csv,"text/csv;charset=utf-8"))toast("Planilha gerada");
@@ -515,7 +534,7 @@ $("csv").onclick=()=>{
 function renderMais(){
   const ds=Object.keys(store.dias).filter(hasData).sort().reverse().slice(0,60);
   $("hist").innerHTML=ds.length?ds.map(d=>{let p=0,x=0,a=0,s=0;Object.keys(dayRotas(d)).forEach(r=>{const e=ent(r,d),q=qnt(e);p+=q;x+=e.express;a+=e.d1+e.d2;if((q||e.express)&&!e.baixa)s++;});
-    return '<li><span>'+br(d)+' <small style="font-weight:400;color:var(--muted)">'+WD[pISO(d).getDay()]+'</small><br><small style="font-weight:500;color:var(--muted)">'+p+" peças · "+x+" exp"+(a?' · <b style="color:var(--d2)">'+a+" atras.</b>":"")+(s?" · "+s+" sem baixa":" · ✓ tudo baixado")+'</small></span><button data-go="'+d+'">Abrir</button></li>';}).join(""):'<li><span class="note">Ainda não há dias salvos.</span></li>';
+    return '<li><span>'+br(d)+' <small style="font-weight:400;color:var(--muted)">'+WD[pISO(d).getDay()]+'</small><br><small style="font-weight:500;color:var(--muted)">'+p+" peças · "+x+" vol"+(a?' · <b style="color:var(--d2)">'+a+" atras.</b>":"")+(s?" · "+s+" sem baixa":" · ✓ tudo baixado")+'</small></span><button data-go="'+d+'">Abrir</button></li>';}).join(""):'<li><span class="note">Ainda não há dias salvos.</span></li>';
   $("mRotasN").textContent=store.rotas.length+" rotas";
   $("mBkInfo").textContent=meta.lastBackup?"último: "+br(iso(new Date(meta.lastBackup))):"nunca feito";
   $("mClearD").textContent=br(cur);
@@ -563,6 +582,13 @@ $("bRest").onclick=()=>{
 // ---------- boot ----------
 function renderAll(){renderHeader();renderList();renderBanners();}
 if(!localStorage.getItem(LS))save();
+if(meta.rv!==2){
+  const nl=DEF.slice();
+  store.rotas.forEach(r=>{if(!findRoute(r,nl))nl.push(r);});
+  Object.values(store.dias).forEach(d=>{const nr={};Object.keys(d.rotas||{}).forEach(r=>{const m=findRoute(r,nl)||r,e=d.rotas[r];
+    if(nr[m]){["d0","d1","d2","express"].forEach(f=>nr[m][f]=n(nr[m][f])+n(e[f]));nr[m].baixa=nr[m].baixa&&!!e.baixa;}else nr[m]=Object.assign({},e);});d.rotas=nr;});
+  store.rotas=nl;meta.rv=2;saveMeta();save();
+}
 renderAll();
 setPill(navigator.onLine===false?"Offline · salvo no aparelho":"Pronto",false);
 window.addEventListener("scroll",()=>$("hdr").classList.toggle("stuck",window.scrollY>40),{passive:true});
